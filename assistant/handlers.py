@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from .pc_control import PCController
+from .ollama import OllamaClient
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from telebot import TeleBot
@@ -12,7 +13,9 @@ else:  # pragma: no cover - TeleBot type only used for hints
     TeleBot = Any
 
 
-def register_handlers(bot: "TeleBot", pc_controller: PCController) -> None:
+def register_handlers(
+    bot: "TeleBot", pc_controller: PCController, ollama_client: Optional[OllamaClient] = None
+) -> None:
     """Register command handlers on the provided bot instance."""
 
     @bot.message_handler(commands=["start", "help"])
@@ -52,10 +55,23 @@ def register_handlers(bot: "TeleBot", pc_controller: PCController) -> None:
 
     @bot.message_handler(func=lambda _message: True)
     def handle_fallback(message: Any) -> None:
-        bot.reply_to(
-            message,
-            "I didn't understand that. Try /help for a list of supported commands.",
-        )
+        if not ollama_client:
+            bot.reply_to(
+                message,
+                "I didn't understand that. Try /help for a list of supported commands.",
+            )
+            return
+
+        try:
+            response = ollama_client.generate(message.text)
+        except RuntimeError as exc:
+            bot.reply_to(
+                message,
+                "⚠️ I'm having trouble reaching the Ollama service right now. Please try again later.",
+            )
+            return
+
+        bot.reply_to(message, response or "I'm not sure how to help with that yet.")
 
 
 __all__ = ["register_handlers"]

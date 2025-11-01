@@ -13,6 +13,8 @@ class Config:
 
     telegram_bot_token: str
     openai_api_key: Optional[str] = None
+    ollama_model: Optional[str] = None
+    ollama_base_url: Optional[str] = None
     pc_control_endpoint: Optional[str] = None
 
     @classmethod
@@ -32,6 +34,8 @@ class Config:
         return cls(
             telegram_bot_token=token,
             openai_api_key=os.getenv("OPENAI_API_KEY"),
+            ollama_model=os.getenv("OLLAMA_MODEL"),
+            ollama_base_url=os.getenv("OLLAMA_BASE_URL"),
             pc_control_endpoint=os.getenv("PC_CONTROL_ENDPOINT"),
         )
 
